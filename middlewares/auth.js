@@ -14,3 +14,4 @@ exports.isAuthenticated = catchAsyncErrors(async(req,res,next)=>{
     res.json({ id, token})
     next()
 })
+

@@ -1,6 +1,7 @@
 const { catchAsyncErrors } = require("../middlewares/catchAsyncError");
 const Student = require("../models/studentModel");
 const ErrorHandler = require("../utils/ErrorHandler");
+const { sendmail } = require("../utils/nodemailer");
 const { sendtoken } = require("../utils/SendToken");
 
 
@@ -35,9 +36,28 @@ exports.studentsignin = catchAsyncErrors(async(req,res,next)=>{
         sendtoken(student , 200 , res)
 })
 
-exports.studentsignout = catchAsyncErrors(async(req,res,next)=>{
-        
+exports.studentsignout = catchAsyncErrors(async (req, res, next) => {
+        // If an error happens here, it may be passed to the error handler, 
+        // which will try to send a second response.
         res.clearCookie("token");
-        res.json({message : "Successfully signout"})
-})
+        return res.status(202).json({ message: "Successfully signed out" });
+});
+      
+    
 
+exports.studentsendmail= catchAsyncErrors(async(req,res,next)=>{
+        const student = await Student.findOne({email: req.body.email}).exec()
+        if(!student) {
+                return next(
+                 new ErrorHandler("User not found",404)
+        )
+        }
+
+        const url = `${req.protocol}://${req.get("host")}/student/forget-link/${
+                student._id}
+                
+                `
+        sendmail(req,res,next,url);
+        
+        res.json({student,url})
+})
